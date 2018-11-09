@@ -48,6 +48,7 @@ AdaptiveNamespaceStart
     runtimeclass AdaptiveTimeInput;
     runtimeclass AdaptiveToggleInput;
     runtimeclass AdaptiveSeparator;
+    runtimeclass AdaptiveToggleViewStateAction;
 
     runtimeclass AdaptiveFontSizesConfig;
     runtimeclass AdaptiveFontWeightsConfig;
@@ -261,6 +262,7 @@ AdaptiveNamespaceStart
         ShowCard,
         Submit,
         OpenUrl,
+        ToggleViewState,
         Custom
     } ActionType;
 
@@ -509,6 +511,9 @@ AdaptiveNamespaceStart
 
         [propget] HRESULT Id([out, retval] HSTRING* value);
         [propput] HRESULT Id([in] HSTRING value);
+
+        [propget] HRESULT Visibility([out, retval] boolean * value);
+        [propput] HRESULT Visibility([in] boolean value);
 
         [propget] HRESULT AdditionalProperties([out, retval] Windows.Data.Json.JsonObject** json);
         [propput] HRESULT AdditionalProperties([in] Windows.Data.Json.JsonObject* json);
@@ -2537,6 +2542,34 @@ AdaptiveNamespaceStart
 
     [
         version(NTDDI_WIN10_RS1),
+        exclusiveto(AdaptiveToggleViewStateAction),
+#ifdef ADAPTIVE_CARDS_WINDOWS
+        uuid(7DD38D1D-338A-40D3-9AF8-912FBC61427C),
+        contract(InternalContract, 1),
+        internal
+#else
+        uuid(DF122310-5768-4111-A155-92F6F34BB37A)
+#endif
+    ] interface IAdaptiveToggleViewStateAction : IInspectable
+    {
+        [propget] HRESULT ToggleId([out, retval] HSTRING* value);
+        [propput] HRESULT ToggleId([in] HSTRING value);
+    };
+
+    [version(NTDDI_WIN10_RS1),
+     activatable(NTDDI_WIN10_RS1),
+#ifdef ADAPTIVE_CARDS_WINDOWS
+     contract(InternalContract, 1),
+     internal,
+     activatable(InternalContract, 1)
+#endif
+    ] runtimeclass AdaptiveToggleViewStateAction {
+        [default] interface IAdaptiveToggleViewStateAction;
+        interface IAdaptiveActionElement;
+    };
+
+    [
+        version(NTDDI_WIN10_RS1),
         exclusiveto(AdaptiveCardResourceResolvers),
 #ifdef ADAPTIVE_CARDS_WINDOWS
         uuid(8e467d28-ef21-4b9c-aad5-36e6073b1132),
@@ -2942,6 +2975,8 @@ AdaptiveNamespaceStart
         [propget] HRESULT MediaEventInvoker([out, retval] AdaptiveMediaEventInvoker** value);
 
         [propget] HRESULT OverrideStyles([out, retval] Windows.UI.Xaml.ResourceDictionary** overrideDictionary);
+
+        [propget] HRESULT CardFrameworkElement([out, retval] Windows.UI.Xaml.FrameworkElement * *value);
 
         HRESULT AddInputValue([in] IAdaptiveInputValue* inputValue);
         HRESULT AddError([in] ErrorStatusCode statusCode, [in] HSTRING message);

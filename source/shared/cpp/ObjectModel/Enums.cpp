@@ -126,6 +126,7 @@ namespace AdaptiveSharedNamespace
             {AdaptiveCardSchemaKey::Thickness, "thickness"},
             {AdaptiveCardSchemaKey::TimeInput, "timeInput"},
             {AdaptiveCardSchemaKey::Title, "title"},
+            {AdaptiveCardSchemaKey::ToggleId, "toggleId"},
             {AdaptiveCardSchemaKey::ToggleInput, "toggleInput"},
             {AdaptiveCardSchemaKey::Top, "top"},
             {AdaptiveCardSchemaKey::Type, "type"},
@@ -135,6 +136,7 @@ namespace AdaptiveSharedNamespace
             {AdaptiveCardSchemaKey::ValueOn, "valueOn"},
             {AdaptiveCardSchemaKey::Version, "version"},
             {AdaptiveCardSchemaKey::VerticalContentAlignment, "verticalContentAlignment"},
+            {AdaptiveCardSchemaKey::Visibility, "visibility"},
             {AdaptiveCardSchemaKey::Warning, "warning"},
             {AdaptiveCardSchemaKey::Weight, "weight"},
             {AdaptiveCardSchemaKey::Width, "width"},
@@ -165,6 +167,7 @@ namespace AdaptiveSharedNamespace
             {ActionType::OpenUrl, "Action.OpenUrl"},
             {ActionType::ShowCard, "Action.ShowCard"},
             {ActionType::Submit, "Action.Submit"},
+            {ActionType::ToggleViewState, "Action.ToggleViewState"},
             {ActionType::Custom, "Custom"}});
 
     DEFINE_ADAPTIVECARD_ENUM_DEFAULT(HeightType, HeightType::Stretch, {

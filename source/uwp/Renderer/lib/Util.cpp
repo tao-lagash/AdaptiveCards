@@ -25,6 +25,7 @@
 #include "AdaptiveTextInput.h"
 #include "AdaptiveTimeInput.h"
 #include "AdaptiveToggleInput.h"
+#include "AdaptiveToggleViewStateAction.h"
 #include "AdaptiveWarning.h"
 #include "CustomActionWrapper.h"
 #include "CustomElementWrapper.h"
@@ -453,6 +454,10 @@ HRESULT GenerateActionProjection(const std::shared_ptr<AdaptiveSharedNamespace::
     case ActionType::Submit:
         RETURN_IF_FAILED(MakeAndInitialize<::AdaptiveNamespace::AdaptiveSubmitAction>(
             projectedAction, std::AdaptivePointerCast<AdaptiveSharedNamespace::SubmitAction>(action)));
+        break;
+    case ActionType::ToggleViewState:
+        RETURN_IF_FAILED(MakeAndInitialize<::AdaptiveNamespace::AdaptiveToggleViewStateAction>(
+            projectedAction, std::AdaptivePointerCast<AdaptiveSharedNamespace::ToggleViewStateAction>(action)));
         break;
     case ActionType::Custom:
         RETURN_IF_FAILED(std::AdaptivePointerCast<CustomActionWrapper>(action)->GetWrappedElement(projectedAction));

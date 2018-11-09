@@ -127,6 +127,7 @@ namespace AdaptiveSharedNamespace
         Thickness,
         TimeInput,
         Title,
+        ToggleId,
         ToggleInput,
         Top,
         Type,
@@ -136,6 +137,7 @@ namespace AdaptiveSharedNamespace
         ValueOn,
         Version,
         VerticalContentAlignment,
+        Visibility,
         Warning,
         Weight,
         Width,
@@ -247,6 +249,7 @@ namespace AdaptiveSharedNamespace
         ShowCard,
         Submit,
         OpenUrl,
+        ToggleViewState,
         Custom
     };
     DECLARE_ADAPTIVECARD_ENUM(ActionType);

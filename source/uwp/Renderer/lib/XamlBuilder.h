@@ -162,7 +162,7 @@ namespace AdaptiveNamespace
                                   ABI::AdaptiveNamespace::ContainerStyle containerStyle,
                                   _In_ ABI::AdaptiveNamespace::IAdaptiveHostConfig* hostConfig,
                                   _In_ bool allActionsHaveIcons,
-                                  _Inout_ ABI::Windows::UI::Xaml::Controls::IButton* button);
+                                  _Inout_ ABI::Windows::UI::Xaml::Controls::Primitives::IButtonBase* button);
         void BuildActions(_In_ ABI::Windows::Foundation::Collections::IVector<ABI::AdaptiveNamespace::IAdaptiveActionElement*>* children,
                           _In_ AdaptiveNamespace::AdaptiveCardRenderer* renderer,
                           _In_ ABI::Windows::UI::Xaml::Controls::IPanel* parentPanel,
@@ -251,5 +251,13 @@ namespace AdaptiveNamespace
         template<typename T>
         static void SetVerticalContentAlignmentToChildren(_In_ T* container,
                                                           _In_ ABI::AdaptiveNamespace::VerticalContentAlignment verticalContentAlignment);
+
+        static HRESULT HandleToggleViewStateClick(ABI::AdaptiveNamespace::IAdaptiveRenderContext* renderContext,
+                                                  ABI::AdaptiveNamespace::IAdaptiveActionElement* action,
+                                                  ABI::Windows::UI::Xaml::Controls::Primitives::IButtonBase* button);
+
+        static void SetIdAndTransform(ABI::AdaptiveNamespace::IAdaptiveRenderContext* renderContext,
+                                      HSTRING id,
+                                      ABI::Windows::UI::Xaml::IUIElement* uiElement);
     };
 }

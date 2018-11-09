@@ -5,6 +5,7 @@
 #include "AdaptiveWarning.h"
 #include "InputValue.h"
 #include "Util.h"
+#include "Vector.h"
 
 using namespace Microsoft::WRL;
 using namespace Microsoft::WRL::Wrappers;
@@ -84,6 +85,29 @@ namespace AdaptiveNamespace
         ComPtr<IVector<ABI::AdaptiveNamespace::IAdaptiveWarning*>> warnings;
         RETURN_IF_FAILED(m_renderResult->get_Warnings(&warnings));
         return (warnings->Append(warning.Detach()));
+    }
+
+    HRESULT AdaptiveRenderContext::get_CardFrameworkElement(_COM_Outptr_ ABI::Windows::UI::Xaml::IFrameworkElement** value)
+    {
+        return m_cardFrameworkElement.CopyTo(value);
+    }
+
+    HRESULT AdaptiveRenderContext::put_CardFrameworkElement(ABI::Windows::UI::Xaml::IFrameworkElement* value)
+    {
+        m_cardFrameworkElement = value;
+        return S_OK;
+    }
+
+    HRESULT AdaptiveRenderContext::AddAnimationTimeline(HSTRING targetName, ABI::Windows::UI::Xaml::Media::Animation::ITimeline* timeline)
+    {
+        m_animationTimelines[HStringToUTF8(targetName)] = timeline;
+        return S_OK;
+    }
+
+    HRESULT AdaptiveRenderContext::GetAnimationTimline(HSTRING targetName, ABI::Windows::UI::Xaml::Media::Animation::ITimeline** timeline)
+    {
+        m_animationTimelines[HStringToUTF8(targetName)].CopyTo(timeline);
+        return S_OK;
     }
 
     _Use_decl_annotations_ HRESULT AdaptiveRenderContext::AddInputValue(IAdaptiveInputValue* inputValue)

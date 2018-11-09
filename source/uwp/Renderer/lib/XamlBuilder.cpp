@@ -148,20 +148,8 @@ namespace AdaptiveNamespace
             ComPtr<IPanel> bodyElementContainer;
             ComPtr<IUIElement> rootElement =
                 CreateRootCardElement(adaptiveCard, renderContext, renderArgs.Get(), &outerElementContainer, &bodyElementContainer);
-            ComPtr<IFrameworkElement> childElementContainerAsFE;
-            THROW_IF_FAILED(rootElement.As(&childElementContainerAsFE));
-
-            // Enumerate the child items of the card and build xaml for them
-            ComPtr<IVector<IAdaptiveCardElement*>> body;
-            THROW_IF_FAILED(adaptiveCard->get_Body(&body));
-            ComPtr<IAdaptiveRenderArgs> bodyRenderArgs;
-            THROW_IF_FAILED(
-                MakeAndInitialize<AdaptiveRenderArgs>(&bodyRenderArgs, containerStyle, childElementContainerAsFE.Get()));
-            BuildPanelChildren(body.Get(), bodyElementContainer.Get(), renderContext, bodyRenderArgs.Get(), [](IUIElement*) {});
-
-            ABI::AdaptiveNamespace::VerticalContentAlignment verticalContentAlignment;
-            THROW_IF_FAILED(adaptiveCard->get_VerticalContentAlignment(&verticalContentAlignment));
-            XamlBuilder::SetVerticalContentAlignmentToChildren(bodyElementContainer.Get(), verticalContentAlignment);
+            ComPtr<IFrameworkElement> rootAsFrameworkElement;
+            THROW_IF_FAILED(rootElement.As(&rootAsFrameworkElement));
 
             ComPtr<IAdaptiveActionElement> selectAction;
             THROW_IF_FAILED(adaptiveCard->get_SelectAction(&selectAction));
@@ -175,7 +163,24 @@ namespace AdaptiveNamespace
                                SupportsInteractivity(hostConfig.Get()),
                                true,
                                &rootSelectActionElement);
-            THROW_IF_FAILED(rootSelectActionElement.As(&childElementContainerAsFE));
+            THROW_IF_FAILED(rootSelectActionElement.As(&rootAsFrameworkElement));
+
+            ComPtr<AdaptiveNamespace::AdaptiveRenderContext> contextImpl =
+                PeekInnards<AdaptiveNamespace::AdaptiveRenderContext>(renderContext);
+
+            THROW_IF_FAILED(contextImpl->put_CardFrameworkElement(rootAsFrameworkElement.Get()));
+
+            // Enumerate the child items of the card and build xaml for them
+            ComPtr<IVector<IAdaptiveCardElement*>> body;
+            THROW_IF_FAILED(adaptiveCard->get_Body(&body));
+            ComPtr<IAdaptiveRenderArgs> bodyRenderArgs;
+            THROW_IF_FAILED(
+                MakeAndInitialize<AdaptiveRenderArgs>(&bodyRenderArgs, containerStyle, rootAsFrameworkElement.Get()));
+            BuildPanelChildren(body.Get(), bodyElementContainer.Get(), renderContext, bodyRenderArgs.Get(), [](IUIElement*) {});
+
+            ABI::AdaptiveNamespace::VerticalContentAlignment verticalContentAlignment;
+            THROW_IF_FAILED(adaptiveCard->get_VerticalContentAlignment(&verticalContentAlignment));
+            XamlBuilder::SetVerticalContentAlignmentToChildren(bodyElementContainer.Get(), verticalContentAlignment);
 
             ComPtr<IVector<IAdaptiveActionElement*>> actions;
             THROW_IF_FAILED(adaptiveCard->get_Actions(&actions));
@@ -199,16 +204,15 @@ namespace AdaptiveNamespace
 
             if (isOuterCard)
             {
-                THROW_IF_FAILED(
-                    SetStyleFromResourceDictionary(renderContext, L"Adaptive.Card", childElementContainerAsFE.Get()));
+                THROW_IF_FAILED(SetStyleFromResourceDictionary(renderContext, L"Adaptive.Card", rootAsFrameworkElement.Get()));
             }
             else
             {
                 THROW_IF_FAILED(
-                    SetStyleFromResourceDictionary(renderContext, L"Adaptive.ShowCard.Card", childElementContainerAsFE.Get()));
+                    SetStyleFromResourceDictionary(renderContext, L"Adaptive.ShowCard.Card", rootAsFrameworkElement.Get()));
             }
 
-            THROW_IF_FAILED(childElementContainerAsFE.CopyTo(xamlTreeRoot));
+            THROW_IF_FAILED(rootAsFrameworkElement.CopyTo(xamlTreeRoot));
 
             if (isOuterCard)
             {
@@ -777,6 +781,15 @@ namespace AdaptiveNamespace
         }
     }
 
+    void XamlBuilder::SetIdAndTransform(IAdaptiveRenderContext* renderContext, HSTRING id, IUIElement* uiElement)
+    {
+        ComPtr<IUIElement> localUiElement(uiElement);
+
+        ComPtr<IFrameworkElement> uiElementAsFrameworkElement;
+        THROW_IF_FAILED(localUiElement.As(&uiElementAsFrameworkElement));
+
+        THROW_IF_FAILED(uiElementAsFrameworkElement->put_Name(id));
+    }
     _Use_decl_annotations_ void XamlBuilder::BuildPanelChildren(IVector<IAdaptiveCardElement*>* children,
                                                                 IPanel* parentPanel,
                                                                 ABI::AdaptiveNamespace::IAdaptiveRenderContext* renderContext,
@@ -814,6 +827,22 @@ namespace AdaptiveNamespace
 
                 ComPtr<IUIElement> newControl;
                 elementRenderer->Render(element, renderContext, renderArgs, &newControl);
+
+                boolean visibility;
+                THROW_IF_FAILED(element->get_Visibility(&visibility));
+
+                if (!visibility)
+                {
+                    THROW_IF_FAILED(newControl->put_Visibility(Visibility_Collapsed));
+                }
+
+                HString id;
+                element->get_Id(id.GetAddressOf());
+
+                if (id.IsValid())
+                {
+                    SetIdAndTransform(renderContext, id.Get(), newControl.Get());
+                }
 
                 ABI::AdaptiveNamespace::HeightType heightType{};
                 THROW_IF_FAILED(element->get_Height(&heightType));
@@ -890,7 +919,7 @@ namespace AdaptiveNamespace
                                                                   ABI::AdaptiveNamespace::ContainerStyle containerStyle,
                                                                   ABI::AdaptiveNamespace::IAdaptiveHostConfig* hostConfig,
                                                                   bool allActionsHaveIcons,
-                                                                  IButton* button)
+                                                                  IButtonBase* button)
     {
         HString title;
         THROW_IF_FAILED(action->get_Title(title.GetAddressOf()));
@@ -898,7 +927,7 @@ namespace AdaptiveNamespace
         HSTRING iconUrl;
         THROW_IF_FAILED(action->get_IconUrl(&iconUrl));
 
-        ComPtr<IButton> localButton(button);
+        ComPtr<IButtonBase> localButton(button);
 
         // Check if the button has an iconUrl
         if (iconUrl != nullptr)
@@ -1004,6 +1033,57 @@ namespace AdaptiveNamespace
         {
             XamlHelpers::SetContent(localButton.Get(), title.Get());
         }
+    }
+
+    HRESULT XamlBuilder::HandleToggleViewStateClick(IAdaptiveRenderContext* renderContext, IAdaptiveActionElement* action, IButtonBase* button)
+    {
+        ComPtr<IAdaptiveActionElement> localAction(action);
+        ComPtr<IAdaptiveToggleViewStateAction> toggleAction;
+        RETURN_IF_FAILED(localAction.As(&toggleAction));
+
+        HString toggleId;
+        RETURN_IF_FAILED(toggleAction->get_ToggleId(toggleId.GetAddressOf()));
+
+        ComPtr<IFrameworkElement> cardFrameworkElement;
+        RETURN_IF_FAILED(renderContext->get_CardFrameworkElement(&cardFrameworkElement));
+
+        ComPtr<IInspectable> toggleElement;
+        RETURN_IF_FAILED(cardFrameworkElement->FindName(toggleId.Get(), &toggleElement));
+
+        if (toggleElement != nullptr)
+        {
+            ComPtr<IUIElement> toggleElementAsUIElement;
+            RETURN_IF_FAILED(toggleElement.As(&toggleElementAsUIElement));
+
+            Visibility currentVisibility;
+            RETURN_IF_FAILED(toggleElementAsUIElement->get_Visibility(&currentVisibility));
+            RETURN_IF_FAILED(toggleElementAsUIElement->put_Visibility(
+                (currentVisibility == Visibility_Collapsed) ? Visibility_Visible : Visibility_Collapsed));
+        }
+
+        HString title;
+        action->get_Title(title.GetAddressOf());
+
+        ComPtr<IButtonBase> localButton(button);
+        ComPtr<IToggleButton> toggleButton;
+        localButton.As(&toggleButton);
+
+        ComPtr<IReference<bool>> isChecked;
+        toggleButton->get_IsChecked(isChecked.GetAddressOf());
+
+        boolean isCheckedValue;
+        isChecked->get_Value(&isCheckedValue);
+
+        ComPtr<IResourceDictionary> resourceDictionary;
+        renderContext->get_OverrideStyles(&resourceDictionary);
+
+        HString actionId;
+        localAction->get_Id(actionId.GetAddressOf());
+
+        UINT32 length;
+        std::wstring actionIdWString = WindowsGetStringRawBuffer(actionId.Get(), &length);
+
+        return S_OK;
     }
 
     _Use_decl_annotations_ void XamlBuilder::BuildActions(IVector<IAdaptiveActionElement*>* children,
@@ -1150,11 +1230,26 @@ namespace AdaptiveNamespace
             {
                 // Render a button for each action
                 ComPtr<IAdaptiveActionElement> action(child);
-                ComPtr<IButton> button =
-                    XamlHelpers::CreateXamlClass<IButton>(HStringReference(RuntimeClass_Windows_UI_Xaml_Controls_Button));
+
+                ABI::AdaptiveNamespace::ActionType actionType;
+                action->get_ActionType(&actionType);
+
+                ComPtr<IButtonBase> buttonBase;
+                if (actionType == ActionType_ToggleViewState)
+                {
+                    ComPtr<IToggleButton> toggleButton = XamlHelpers::CreateXamlClass<IToggleButton>(
+                        HStringReference(RuntimeClass_Windows_UI_Xaml_Controls_Primitives_ToggleButton));
+                    toggleButton.As(&buttonBase);
+                }
+                else
+                {
+                    ComPtr<IButton> button =
+                        XamlHelpers::CreateXamlClass<IButton>(HStringReference(RuntimeClass_Windows_UI_Xaml_Controls_Button));
+                    button.As(&buttonBase);
+                }
 
                 ComPtr<IFrameworkElement> buttonFrameworkElement;
-                THROW_IF_FAILED(button.As(&buttonFrameworkElement));
+                THROW_IF_FAILED(buttonBase.As(&buttonFrameworkElement));
 
                 THROW_IF_FAILED(buttonFrameworkElement->put_Margin(buttonMargin));
 
@@ -1189,10 +1284,7 @@ namespace AdaptiveNamespace
                                      containerStyle,
                                      hostConfig.Get(),
                                      allActionsHaveIcons,
-                                     button.Get());
-
-                ABI::AdaptiveNamespace::ActionType actionType;
-                THROW_IF_FAILED(action->get_ActionType(&actionType));
+                                     buttonBase.Get());
 
                 // If this is a show card action and we're rendering the actions inline, render the card that will be shown
                 ComPtr<IUIElement> uiShowCard;
@@ -1212,42 +1304,46 @@ namespace AdaptiveNamespace
                 }
 
                 // Add click handler
-                ComPtr<IButtonBase> buttonBase;
-                THROW_IF_FAILED(button.As(&buttonBase));
                 ComPtr<IAdaptiveActionInvoker> actionInvoker;
                 THROW_IF_FAILED(strongRenderContext->get_ActionInvoker(&actionInvoker));
                 EventRegistrationToken clickToken;
                 THROW_IF_FAILED(buttonBase->add_Click(
-                    Callback<IRoutedEventHandler>([action, actionType, showCardActionMode, uiShowCard, allShowCards, actionInvoker](
-                                                      IInspectable* /*sender*/, IRoutedEventArgs * /*args*/) -> HRESULT {
-                        if (actionType == ABI::AdaptiveNamespace::ActionType::ShowCard &&
-                            showCardActionMode != ABI::AdaptiveNamespace::ActionMode_Popup)
-                        {
-                            // Check if this show card is currently visible
-                            Visibility currentVisibility;
-                            THROW_IF_FAILED(uiShowCard->get_Visibility(&currentVisibility));
-
-                            // Collapse all cards to make sure that no other show cards are visible
-                            for (std::vector<ComPtr<IUIElement>>::iterator it = allShowCards->begin();
-                                 it != allShowCards->end();
-                                 ++it)
+                    Callback<IRoutedEventHandler>(
+                        [action, actionType, showCardActionMode, uiShowCard, allShowCards, actionInvoker, strongRenderContext, buttonBase](
+                            IInspectable* /*sender*/, IRoutedEventArgs * /*args*/) -> HRESULT {
+                            if (actionType == ABI::AdaptiveNamespace::ActionType::ShowCard &&
+                                showCardActionMode != ABI::AdaptiveNamespace::ActionMode_Popup)
                             {
-                                THROW_IF_FAILED((*it)->put_Visibility(Visibility_Collapsed));
+                                // Check if this show card is currently visible
+                                Visibility currentVisibility;
+                                RETURN_IF_FAILED(uiShowCard->get_Visibility(&currentVisibility));
+
+                                // Collapse all cards to make sure that no other show cards are visible
+                                for (std::vector<ComPtr<IUIElement>>::iterator it = allShowCards->begin();
+                                     it != allShowCards->end();
+                                     ++it)
+                                {
+                                    RETURN_IF_FAILED((*it)->put_Visibility(Visibility_Collapsed));
+                                }
+
+                                // If the card had been collapsed before, show it now
+                                if (currentVisibility == Visibility_Collapsed)
+                                {
+                                    RETURN_IF_FAILED(uiShowCard->put_Visibility(Visibility_Visible));
+                                }
+                            }
+                            else if (actionType == ABI::AdaptiveNamespace::ActionType::ToggleViewState)
+                            {
+                                RETURN_IF_FAILED(
+                                    HandleToggleViewStateClick(strongRenderContext.Get(), action.Get(), buttonBase.Get()));
+                            }
+                            else
+                            {
+                                RETURN_IF_FAILED(actionInvoker->SendActionEvent(action.Get()));
                             }
 
-                            // If the card had been collapsed before, show it now
-                            if (currentVisibility == Visibility_Collapsed)
-                            {
-                                THROW_IF_FAILED(uiShowCard->put_Visibility(Visibility_Visible));
-                            }
-                        }
-                        else
-                        {
-                            THROW_IF_FAILED(actionInvoker->SendActionEvent(action.Get()));
-                        }
-
-                        return S_OK;
-                    })
+                            return S_OK;
+                        })
                         .Get(),
                     &clickToken));
 
@@ -1318,7 +1414,17 @@ namespace AdaptiveNamespace
                         SetStyleFromResourceDictionary(renderContext, L"Adaptive.Action", buttonFrameworkElement.Get()));
                 }
 
-                XamlHelpers::AppendXamlElementToPanel(button.Get(), actionsPanel.Get());
+                HString id;
+                action->get_Id(id.GetAddressOf());
+
+                if (id.IsValid())
+                {
+                    ComPtr<IUIElement> buttonAsUiElement;
+                    buttonBase.As(&buttonAsUiElement);
+                    SetIdAndTransform(renderContext, id.Get(), buttonAsUiElement.Get());
+                }
+
+                XamlHelpers::AppendXamlElementToPanel(buttonBase.Get(), actionsPanel.Get());
 
                 if (columnDefinitions != nullptr)
                 {
@@ -3501,10 +3607,9 @@ namespace AdaptiveNamespace
 
         // We want the hit target to equally split the vertical space above and below the current item.
         // However, all we know is the spacing of the current item, which only applies to the spacing above.
-        // We don't know what the spacing of the NEXT element will be, so we can't calculate the correct spacing below.
-        // For now, we'll simply assume the bottom spacing is the same as the top.
-        // NOTE: Only apply spacings (padding, margin) for adaptive card elements to avoid adding
-        // spacings to card-level selectAction.
+        // We don't know what the spacing of the NEXT element will be, so we can't calculate the correct spacing
+        // below. For now, we'll simply assume the bottom spacing is the same as the top. NOTE: Only apply spacings
+        // (padding, margin) for adaptive card elements to avoid adding spacings to card-level selectAction.
         if (adaptiveCardElement != nullptr)
         {
             ABI::AdaptiveNamespace::Spacing elementSpacing;
