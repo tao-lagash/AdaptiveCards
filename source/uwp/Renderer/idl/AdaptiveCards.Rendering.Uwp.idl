@@ -102,6 +102,7 @@ AdaptiveNamespaceStart
     runtimeclass AdaptiveTimeInputRenderer;
     runtimeclass AdaptiveToggleInputRenderer;
     runtimeclass AdaptiveRemoteResourceInformation;
+    runtimeclass AdaptiveToggleTarget;
 
     runtimeclass WholeItemsPanel;
 
@@ -469,6 +470,16 @@ AdaptiveNamespaceStart
         Destructive
     } Sentiment;
 
+[version(NTDDI_WIN10_RS1)]
+#ifdef ADAPTIVE_CARDS_WINDOWS
+    [contract(InternalContract, 1)][internal]
+#endif
+    typedef[v1_enum] enum VisibilityToggle {
+        IsVisibleToggle = 0,
+        IsVisibleTrue,
+        IsVisibleFalse
+    } VisibilityToggle;
+
     declare
     {
         interface Windows.Foundation.Collections.IVector<IAdaptiveCardElement*>;
@@ -482,6 +493,7 @@ AdaptiveNamespaceStart
         interface Windows.Foundation.Collections.IObservableVector<IAdaptiveColumn*>;
         interface Windows.Foundation.IAsyncOperation<RenderedAdaptiveCard*>;
         interface Windows.Foundation.Collections.IVector<AdaptiveMediaSource*>;
+        interface Windows.Foundation.Collections.IVector<AdaptiveToggleTarget*>;
         interface Windows.Foundation.Collections.IVector<AdaptiveRemoteResourceInformation*>;
     }
 
@@ -2525,8 +2537,7 @@ AdaptiveNamespaceStart
         [propput] HRESULT DataJson([in] Windows.Data.Json.JsonValue* value);
     };
 
-    [
-        version(NTDDI_WIN10_RS1),
+[version(NTDDI_WIN10_RS1),
         activatable(NTDDI_WIN10_RS1),
 #ifdef ADAPTIVE_CARDS_WINDOWS
         contract(InternalContract, 1),
@@ -2538,6 +2549,39 @@ AdaptiveNamespaceStart
     {
         [default] interface IAdaptiveSubmitAction;
         interface IAdaptiveActionElement;
+    };
+
+
+    [
+        version(NTDDI_WIN10_RS1),
+        exclusiveto(AdaptiveToggleTarget),
+#ifdef ADAPTIVE_CARDS_WINDOWS
+        uuid(045FA1AE-A5CA-4359-AC35-16FC162F3BF0),
+        contract(InternalContract, 1),
+        internal
+#else
+        uuid(1F626040-8C2F-4C64-AB3E-A80ECE538E5F)
+#endif
+    ] 
+    interface IAdaptiveToggleTarget : IInspectable
+    {
+        [propget] HRESULT VisibilityToggle([out, retval] VisibilityToggle * value);
+        [propput] HRESULT VisibilityToggle([in] VisibilityToggle value);
+
+        [propget] HRESULT Id([out, retval] HSTRING * value);
+        [propput] HRESULT Id([in] HSTRING value);
+    };
+
+    [version(NTDDI_WIN10_RS1),
+     activatable(NTDDI_WIN10_RS1),
+    #ifdef ADAPTIVE_CARDS_WINDOWS
+     contract(InternalContract, 1),
+     internal,
+     activatable(InternalContract, 1)
+    #endif
+    ] 
+    runtimeclass AdaptiveToggleTarget {
+        [default] interface IAdaptiveToggleTarget;
     };
 
     [
@@ -2552,8 +2596,7 @@ AdaptiveNamespaceStart
 #endif
     ] interface IAdaptiveToggleVisibility : IInspectable
     {
-        [propget] HRESULT TargetElements([out, retval] HSTRING* value);
-        [propput] HRESULT TargetElements([in] HSTRING value);
+        [propget] HRESULT TargetElements([out, retval] Windows.Foundation.Collections.IVector<AdaptiveToggleTarget*> * *value);
     };
 
     [version(NTDDI_WIN10_RS1),

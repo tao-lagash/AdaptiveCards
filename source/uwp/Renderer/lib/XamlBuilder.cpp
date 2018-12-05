@@ -622,7 +622,8 @@ namespace AdaptiveNamespace
             std::vector<char> decodedData = AdaptiveBase64Util::Decode(data);
 
             ComPtr<IBufferFactory> bufferFactory;
-            THROW_IF_FAILED(GetActivationFactory(HStringReference(RuntimeClass_Windows_Storage_Streams_Buffer).Get(), bufferFactory.GetAddressOf()));
+            THROW_IF_FAILED(GetActivationFactory(HStringReference(RuntimeClass_Windows_Storage_Streams_Buffer).Get(),
+                                                 bufferFactory.GetAddressOf()));
 
             ComPtr<IBuffer> buffer;
             THROW_IF_FAILED(bufferFactory->Create(static_cast<UINT32>(decodedData.size()), buffer.GetAddressOf()));
@@ -658,18 +659,17 @@ namespace AdaptiveNamespace
             THROW_IF_FAILED(bufferWriteOperation->put_Completed(
                 Callback<Implements<RuntimeClassFlags<WinRtClassicComMix>, IAsyncOperationWithProgressCompletedHandler<UINT32, UINT32>>>(
                     [strongThis, this, bitmapSource, randomAccessStream, strongImageControl](
-                        IAsyncOperationWithProgress<UINT32, UINT32>* /*operation*/, AsyncStatus /*status*/)->HRESULT {
+                        IAsyncOperationWithProgress<UINT32, UINT32>* /*operation*/, AsyncStatus /*status*/) -> HRESULT {
+                        randomAccessStream->Seek(0);
+                        RETURN_IF_FAILED(bitmapSource->SetSource(randomAccessStream.Get()));
 
-                randomAccessStream->Seek(0);
-                RETURN_IF_FAILED(bitmapSource->SetSource(randomAccessStream.Get()));
+                        ComPtr<IImageSource> imageSource;
+                        RETURN_IF_FAILED(bitmapSource.As(&imageSource));
 
-                ComPtr<IImageSource> imageSource;
-                RETURN_IF_FAILED(bitmapSource.As(&imageSource));
-
-                SetImageSource(strongImageControl.Get(), imageSource.Get());
-                return S_OK;
-            })
-                .Get()));
+                        SetImageSource(strongImageControl.Get(), imageSource.Get());
+                        return S_OK;
+                    })
+                    .Get()));
             m_writeAsyncOperations.push_back(bufferWriteOperation);
             *mustHideElement = false;
             return;
@@ -1041,24 +1041,59 @@ namespace AdaptiveNamespace
         ComPtr<IAdaptiveToggleVisibility> toggleAction;
         RETURN_IF_FAILED(localAction.As(&toggleAction));
 
-        HString toggleId;
-        RETURN_IF_FAILED(toggleAction->get_TargetElements(toggleId.GetAddressOf()));
+        ComPtr<IVector<AdaptiveToggleTarget*>> targets;
+        THROW_IF_FAILED(toggleAction->get_TargetElements(&targets));
 
         ComPtr<IFrameworkElement> cardFrameworkElement;
         RETURN_IF_FAILED(renderContext->get_CardFrameworkElement(&cardFrameworkElement));
 
-        ComPtr<IInspectable> toggleElement;
-        RETURN_IF_FAILED(cardFrameworkElement->FindName(toggleId.Get(), &toggleElement));
+        ComPtr<IIterable<AdaptiveToggleTarget*>> targetsIterable;
+        THROW_IF_FAILED(targets.As<IIterable<AdaptiveToggleTarget*>>(&targetsIterable));
 
-        if (toggleElement != nullptr)
+        boolean hasCurrent;
+        ComPtr<IIterator<AdaptiveToggleTarget*>> targetIterator;
+        HRESULT hr = targetsIterable->First(&targetIterator);
+        THROW_IF_FAILED(targetIterator->get_HasCurrent(&hasCurrent));
+
+        while (SUCCEEDED(hr) && hasCurrent)
         {
-            ComPtr<IUIElement> toggleElementAsUIElement;
-            RETURN_IF_FAILED(toggleElement.As(&toggleElementAsUIElement));
+            ComPtr<IAdaptiveToggleTarget> currentTarget;
+            THROW_IF_FAILED(targetIterator->get_Current(&currentTarget));
 
-            Visibility currentVisibility;
-            RETURN_IF_FAILED(toggleElementAsUIElement->get_Visibility(&currentVisibility));
-            RETURN_IF_FAILED(toggleElementAsUIElement->put_Visibility(
-                (currentVisibility == Visibility_Collapsed) ? Visibility_Visible : Visibility_Collapsed));
+            HString toggleId;
+            currentTarget->get_Id(toggleId.GetAddressOf());
+
+            ABI::AdaptiveNamespace::VisibilityToggle toggle;
+            currentTarget->get_VisibilityToggle(&toggle);
+
+            ComPtr<IInspectable> toggleElement;
+            RETURN_IF_FAILED(cardFrameworkElement->FindName(toggleId.Get(), &toggleElement));
+
+            if (toggleElement != nullptr)
+            {
+                ComPtr<IUIElement> toggleElementAsUIElement;
+                RETURN_IF_FAILED(toggleElement.As(&toggleElementAsUIElement));
+
+                Visibility visibilityToSet;
+                if (toggle == ABI::AdaptiveNamespace::VisibilityToggle_IsVisibleTrue)
+                {
+                    visibilityToSet = Visibility_Visible;
+                }
+                else if (toggle == ABI::AdaptiveNamespace::VisibilityToggle_IsVisibleFalse)
+                {
+                    visibilityToSet = Visibility_Collapsed;
+                }
+                else if (toggle == ABI::AdaptiveNamespace::VisibilityToggle_IsVisibleToggle)
+                {
+                    Visibility currentVisibility;
+                    RETURN_IF_FAILED(toggleElementAsUIElement->get_Visibility(&currentVisibility));
+                    visibilityToSet = (currentVisibility == Visibility_Collapsed) ? Visibility_Visible : Visibility_Collapsed;
+                }
+
+                RETURN_IF_FAILED(toggleElementAsUIElement->put_Visibility(visibilityToSet));
+            }
+
+            hr = targetIterator->MoveNext(&hasCurrent);
         }
 
         HString title;
@@ -1939,7 +1974,7 @@ namespace AdaptiveNamespace
                 THROW_IF_FAILED(brushAsImageBrush->get_ImageSource(&imageSource));
                 ComPtr<IBitmapSource> imageSourceAsBitmap;
                 THROW_IF_FAILED(imageSource.As(&imageSourceAsBitmap));
-                
+
                 // If the image hasn't loaded yet
                 if (mustHideElement)
                 {
@@ -1949,11 +1984,11 @@ namespace AdaptiveNamespace
                     EventRegistrationToken eventToken;
                     THROW_IF_FAILED(brushAsImageBrush->add_ImageOpened(
                         Callback<IRoutedEventHandler>([ellipseAsUIElement](IInspectable* /*sender*/, IRoutedEventArgs * /*args*/) -> HRESULT {
-                        // Don't set the AutoImageSize on the ellipse as it makes the ellipse grow bigger than
-                        // what it would be otherwise, just set the visibility when we get the image
-                        return ellipseAsUIElement->put_Visibility(Visibility::Visibility_Visible);
-                    })
-                        .Get(),
+                            // Don't set the AutoImageSize on the ellipse as it makes the ellipse grow bigger than
+                            // what it would be otherwise, just set the visibility when we get the image
+                            return ellipseAsUIElement->put_Visibility(Visibility::Visibility_Visible);
+                        })
+                            .Get(),
                         &eventToken));
                 }
             }
@@ -1963,7 +1998,7 @@ namespace AdaptiveNamespace
             ComPtr<IImage> xamlImage =
                 XamlHelpers::CreateXamlClass<IImage>(HStringReference(RuntimeClass_Windows_UI_Xaml_Controls_Image));
 
-            bool mustHideElement{ true };
+            bool mustHideElement{true};
             SetImageOnUIElement(imageUrl.Get(), xamlImage.Get(), resourceResolvers.Get(), &mustHideElement);
 
             if (backgroundColor != nullptr)
@@ -2015,10 +2050,10 @@ namespace AdaptiveNamespace
                     EventRegistrationToken eventToken;
                     THROW_IF_FAILED(xamlImage->add_ImageOpened(
                         Callback<IRoutedEventHandler>([frameworkElement, parentElement, imageSourceAsBitmap](IInspectable* /*sender*/, IRoutedEventArgs *
-                            /*args*/) -> HRESULT {
-                        return SetAutoImageSize(frameworkElement.Get(), parentElement.Get(), imageSourceAsBitmap.Get());
-                    })
-                        .Get(),
+                                                                                                             /*args*/) -> HRESULT {
+                            return SetAutoImageSize(frameworkElement.Get(), parentElement.Get(), imageSourceAsBitmap.Get());
+                        })
+                            .Get(),
                         &eventToken));
                 }
                 else

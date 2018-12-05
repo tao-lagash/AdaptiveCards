@@ -21,8 +21,8 @@ namespace AdaptiveNamespace
         HRESULT RuntimeClassInitialize(_In_ const std::shared_ptr<AdaptiveSharedNamespace::ToggleVisibilityAction>& sharedToggleVisibilityAction);
 
         // IAdaptiveToggleVisibilityAction
-        IFACEMETHODIMP get_TargetElements(_Out_ HSTRING* data);
-        IFACEMETHODIMP put_TargetElements(_In_ HSTRING data);
+        IFACEMETHODIMP get_TargetElements(
+            _COM_Outptr_ ABI::Windows::Foundation::Collections::IVector<ABI::AdaptiveNamespace::AdaptiveToggleTarget*>** facts);
 
         // IAdaptiveActionElement
         IFACEMETHODIMP get_ActionType(_Out_ ABI::AdaptiveNamespace::ActionType* actionType);
@@ -63,7 +63,7 @@ namespace AdaptiveNamespace
         void* PeekAt(REFIID riid) override { return PeekHelper(riid, this); }
 
     private:
-        Microsoft::WRL::Wrappers::HString m_toggleId;
+        Microsoft::WRL::ComPtr<ABI::Windows::Foundation::Collections::IVector<ABI::AdaptiveNamespace::AdaptiveToggleTarget*>> m_targetElements;
     };
 
     ActivatableClass(AdaptiveToggleVisibility);

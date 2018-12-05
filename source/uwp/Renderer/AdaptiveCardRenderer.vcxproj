@@ -166,6 +166,7 @@
     <ClInclude Include="lib\AdaptiveTextInputRenderer.h" />
     <ClInclude Include="lib\AdaptiveTimeInputRenderer.h" />
     <ClInclude Include="lib\AdaptiveToggleInputRenderer.h" />
+    <ClInclude Include="lib\AdaptiveToggleTarget.h" />
     <ClInclude Include="lib\AdaptiveToggleVisibilityAction.h" />
     <ClInclude Include="lib\AdaptiveWarning.h" />
     <ClInclude Include="lib\CustomActionWrapper.h" />
@@ -225,6 +226,7 @@
     <ClCompile Include="lib\AdaptiveMediaSource.cpp" />
     <ClCompile Include="lib\AdaptiveMediaEventArgs.cpp" />
     <ClCompile Include="lib\AdaptiveRemoteResourceInformation.cpp" />
+    <ClCompile Include="lib\AdaptiveToggleTarget.cpp" />
     <ClCompile Include="lib\AdaptiveToggleVisibilityAction.cpp" />
     <ClCompile Include="lib\MediaHelpers.cpp" />
     <ClCompile Include="lib\pch.cpp">

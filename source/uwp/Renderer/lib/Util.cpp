@@ -25,6 +25,7 @@
 #include "AdaptiveTextInput.h"
 #include "AdaptiveTimeInput.h"
 #include "AdaptiveToggleInput.h"
+#include "AdaptiveToggleTarget.h"
 #include "AdaptiveToggleVisibilityAction.h"
 #include "AdaptiveWarning.h"
 #include "CustomActionWrapper.h"
@@ -342,6 +343,43 @@ HRESULT GenerateSharedMediaSources(ABI::Windows::Foundation::Collections::IVecto
     return S_OK;
 }
 
+HRESULT GenerateSharedToggleElements(ABI::Windows::Foundation::Collections::IVector<ABI::AdaptiveNamespace::AdaptiveToggleTarget*>* targets,
+                                     std::vector<std::shared_ptr<AdaptiveSharedNamespace::ToggleVisibilityTargetElement>>& containedElements)
+{
+    containedElements.clear();
+
+    ComPtr<ABI::Windows::Foundation::Collections::IVector<ABI::AdaptiveNamespace::AdaptiveToggleTarget*>> localTargets(targets);
+    ComPtr<IIterable<ABI::AdaptiveNamespace::AdaptiveToggleTarget*>> vectorIterable;
+    THROW_IF_FAILED(localTargets.As<IIterable<ABI::AdaptiveNamespace::AdaptiveToggleTarget*>>(&vectorIterable));
+
+    Microsoft::WRL::ComPtr<IIterator<ABI::AdaptiveNamespace::AdaptiveToggleTarget*>> vectorIterator;
+    HRESULT hr = vectorIterable->First(&vectorIterator);
+
+    boolean hasCurrent;
+    THROW_IF_FAILED(vectorIterator->get_HasCurrent(&hasCurrent));
+
+    while (SUCCEEDED(hr) && hasCurrent)
+    {
+        ComPtr<ABI::AdaptiveNamespace::IAdaptiveToggleTarget> target;
+        THROW_IF_FAILED(vectorIterator->get_Current(&target));
+
+        ComPtr<AdaptiveNamespace::AdaptiveToggleTarget> adaptiveElement =
+            PeekInnards<AdaptiveNamespace::AdaptiveToggleTarget>(target);
+        if (adaptiveElement == nullptr)
+        {
+            return E_INVALIDARG;
+        }
+
+        std::shared_ptr<AdaptiveSharedNamespace::ToggleVisibilityTargetElement> sharedTarget;
+        RETURN_IF_FAILED(adaptiveElement->GetSharedModel(sharedTarget));
+        containedElements.push_back(std::AdaptivePointerCast<AdaptiveSharedNamespace::ToggleVisibilityTargetElement>(sharedTarget));
+
+        hr = vectorIterator->MoveNext(&hasCurrent);
+    }
+
+    return S_OK;
+}
+
 HRESULT GenerateContainedElementsProjection(
     const std::vector<std::shared_ptr<AdaptiveSharedNamespace::BaseCardElement>>& containedElements,
     ABI::Windows::Foundation::Collections::IVector<ABI::AdaptiveNamespace::IAdaptiveCardElement*>* projectedParentContainer) noexcept try
@@ -541,6 +579,23 @@ HRESULT GenerateMediaSourcesProjection(
         ComPtr<ABI::AdaptiveNamespace::IAdaptiveMediaSource> projectedContainedElement;
         RETURN_IF_FAILED(MakeAndInitialize<::AdaptiveNamespace::AdaptiveMediaSource>(
             &projectedContainedElement, std::static_pointer_cast<AdaptiveSharedNamespace::MediaSource>(containedElement)));
+
+        RETURN_IF_FAILED(projectedParentContainer->Append(projectedContainedElement.Detach()));
+    }
+    return S_OK;
+}
+CATCH_RETURN;
+
+HRESULT GenerateToggleTargetProjection(
+    const std::vector<std::shared_ptr<AdaptiveSharedNamespace::ToggleVisibilityTargetElement>>& containedElements,
+    ABI::Windows::Foundation::Collections::IVector<ABI::AdaptiveNamespace::AdaptiveToggleTarget*>* projectedParentContainer) noexcept try
+{
+    for (auto& containedElement : containedElements)
+    {
+        ComPtr<ABI::AdaptiveNamespace::IAdaptiveToggleTarget> projectedContainedElement;
+        RETURN_IF_FAILED(MakeAndInitialize<::AdaptiveNamespace::AdaptiveToggleTarget>(
+            &projectedContainedElement,
+            std::static_pointer_cast<AdaptiveSharedNamespace::ToggleVisibilityTargetElement>(containedElement)));
 
         RETURN_IF_FAILED(projectedParentContainer->Append(projectedContainedElement.Detach()));
     }
@@ -750,25 +805,24 @@ HRESULT GetBackgroundColorFromStyle(ABI::AdaptiveNamespace::ContainerStyle style
 }
 CATCH_RETURN;
 
-HRESULT GetFontDataFromStyle(
-    _In_ ABI::AdaptiveNamespace::IAdaptiveHostConfig* hostConfig,
-    _In_ ABI::AdaptiveNamespace::FontStyle style,
-    _In_ ABI::AdaptiveNamespace::TextSize desiredSize,
-    _In_ ABI::AdaptiveNamespace::TextWeight desiredWeight,
-    _Out_ HSTRING* resultFontFamilyName,
-    _Out_ UINT32* resultSize,
-    _Out_ ABI::Windows::UI::Text::FontWeight* resultWeight) noexcept try 
+HRESULT GetFontDataFromStyle(_In_ ABI::AdaptiveNamespace::IAdaptiveHostConfig* hostConfig,
+                             _In_ ABI::AdaptiveNamespace::FontStyle style,
+                             _In_ ABI::AdaptiveNamespace::TextSize desiredSize,
+                             _In_ ABI::AdaptiveNamespace::TextWeight desiredWeight,
+                             _Out_ HSTRING* resultFontFamilyName,
+                             _Out_ UINT32* resultSize,
+                             _Out_ ABI::Windows::UI::Text::FontWeight* resultWeight) noexcept try
 {
     RETURN_IF_FAILED(GetFontFamilyFromStyle(hostConfig, style, resultFontFamilyName));
     RETURN_IF_FAILED(GetFontSizeFromStyle(hostConfig, style, desiredSize, resultSize));
     RETURN_IF_FAILED(GetFontWeightFromStyle(hostConfig, style, desiredWeight, resultWeight));
     return S_OK;
-} CATCH_RETURN;
+}
+CATCH_RETURN;
 
-HRESULT GetFontFamilyFromStyle(
-    _In_ ABI::AdaptiveNamespace::IAdaptiveHostConfig* hostConfig,
-    _In_ ABI::AdaptiveNamespace::FontStyle style,
-    _Out_ HSTRING* resultFontFamilyName) noexcept try 
+HRESULT GetFontFamilyFromStyle(_In_ ABI::AdaptiveNamespace::IAdaptiveHostConfig* hostConfig,
+                               _In_ ABI::AdaptiveNamespace::FontStyle style,
+                               _Out_ HSTRING* resultFontFamilyName) noexcept try
 {
     HString result;
     ABI::AdaptiveNamespace::IAdaptiveFontStyleDefinition* styleDefinition;
@@ -777,20 +831,20 @@ HRESULT GetFontFamilyFromStyle(
     RETURN_IF_FAILED(GetFontStyle(hostConfig, style, &styleDefinition));
     RETURN_IF_FAILED(styleDefinition->get_FontFamily(result.GetAddressOf()));
     if (result == NULL)
-    {   
+    {
         // get FontFamily from Default style
         RETURN_IF_FAILED(GetFontStyle(hostConfig, ABI::AdaptiveNamespace::FontStyle::Default, &styleDefinition));
         RETURN_IF_FAILED(styleDefinition->get_FontFamily(result.GetAddressOf()));
 
-        if (result == NULL) 
+        if (result == NULL)
         {
             // get deprecated FontFamily
             RETURN_IF_FAILED(hostConfig->get_FontFamily(result.GetAddressOf()));
 
-            if (result == NULL) 
+            if (result == NULL)
             {
                 // set system default FontFamily based on desired style
-                switch (style) 
+                switch (style)
                 {
                 case ABI::AdaptiveNamespace::FontStyle::Monospace:
                     RETURN_IF_FAILED(UTF8ToHString("Courier New", result.GetAddressOf()));
@@ -805,13 +859,13 @@ HRESULT GetFontFamilyFromStyle(
         }
     }
     return result.CopyTo(resultFontFamilyName);
-} CATCH_RETURN;
+}
+CATCH_RETURN;
 
-HRESULT GetFontSizeFromStyle(
-    _In_ ABI::AdaptiveNamespace::IAdaptiveHostConfig* hostConfig,
-    _In_ ABI::AdaptiveNamespace::FontStyle style,
-    _In_ ABI::AdaptiveNamespace::TextSize desiredSize,
-    _Out_ UINT32* resultSize) noexcept try
+HRESULT GetFontSizeFromStyle(_In_ ABI::AdaptiveNamespace::IAdaptiveHostConfig* hostConfig,
+                             _In_ ABI::AdaptiveNamespace::FontStyle style,
+                             _In_ ABI::AdaptiveNamespace::TextSize desiredSize,
+                             _Out_ UINT32* resultSize) noexcept try
 {
     UINT32 result;
     ABI::AdaptiveNamespace::IAdaptiveFontStyleDefinition* styleDefinition;
@@ -862,13 +916,13 @@ HRESULT GetFontSizeFromStyle(
     }
     *resultSize = result;
     return S_OK;
-} CATCH_RETURN;
+}
+CATCH_RETURN;
 
-HRESULT GetFontWeightFromStyle(
-    _In_ ABI::AdaptiveNamespace::IAdaptiveHostConfig* hostConfig,
-    _In_ ABI::AdaptiveNamespace::FontStyle style,
-    _In_ ABI::AdaptiveNamespace::TextWeight desiredWeight,
-    _Out_ ABI::Windows::UI::Text::FontWeight* resultWeight) noexcept try
+HRESULT GetFontWeightFromStyle(_In_ ABI::AdaptiveNamespace::IAdaptiveHostConfig* hostConfig,
+                               _In_ ABI::AdaptiveNamespace::FontStyle style,
+                               _In_ ABI::AdaptiveNamespace::TextWeight desiredWeight,
+                               _Out_ ABI::Windows::UI::Text::FontWeight* resultWeight) noexcept try
 {
     UINT16 result;
     ABI::AdaptiveNamespace::IAdaptiveFontStyleDefinition* styleDefinition;
@@ -913,16 +967,16 @@ HRESULT GetFontWeightFromStyle(
     }
     resultWeight->Weight = result;
     return S_OK;
-} CATCH_RETURN;
+}
+CATCH_RETURN;
 
-HRESULT GetFontStyle(
-    _In_ ABI::AdaptiveNamespace::IAdaptiveHostConfig* hostConfig,
-    _In_ ABI::AdaptiveNamespace::FontStyle style,
-    _Out_ ABI::AdaptiveNamespace::IAdaptiveFontStyleDefinition **styleDefinition) noexcept try
+HRESULT GetFontStyle(_In_ ABI::AdaptiveNamespace::IAdaptiveHostConfig* hostConfig,
+                     _In_ ABI::AdaptiveNamespace::FontStyle style,
+                     _Out_ ABI::AdaptiveNamespace::IAdaptiveFontStyleDefinition** styleDefinition) noexcept try
 {
     ABI::AdaptiveNamespace::IAdaptiveFontStylesDefinition* fontStyles;
     RETURN_IF_FAILED(hostConfig->get_FontStyles(&fontStyles));
-    
+
     switch (style)
     {
     case ABI::AdaptiveNamespace::FontStyle::Display:
@@ -937,12 +991,12 @@ HRESULT GetFontStyle(
         break;
     }
     return S_OK;
-} CATCH_RETURN;
+}
+CATCH_RETURN;
 
-HRESULT GetFontSize(
-    _In_ ABI::AdaptiveNamespace::IAdaptiveFontSizesConfig* sizesConfig,
-    _In_ ABI::AdaptiveNamespace::TextSize desiredSize,
-    _Out_ UINT32* resultSize) noexcept try
+HRESULT GetFontSize(_In_ ABI::AdaptiveNamespace::IAdaptiveFontSizesConfig* sizesConfig,
+                    _In_ ABI::AdaptiveNamespace::TextSize desiredSize,
+                    _Out_ UINT32* resultSize) noexcept try
 {
     switch (desiredSize)
     {
@@ -964,12 +1018,12 @@ HRESULT GetFontSize(
         break;
     }
     return S_OK;
-} CATCH_RETURN;
+}
+CATCH_RETURN;
 
-HRESULT GetFontWeight(
-    _In_ ABI::AdaptiveNamespace::IAdaptiveFontWeightsConfig* weightsConfig,
-    _In_ ABI::AdaptiveNamespace::TextWeight desiredWeight,
-    _Out_ UINT16* resultWeight) noexcept try
+HRESULT GetFontWeight(_In_ ABI::AdaptiveNamespace::IAdaptiveFontWeightsConfig* weightsConfig,
+                      _In_ ABI::AdaptiveNamespace::TextWeight desiredWeight,
+                      _Out_ UINT16* resultWeight) noexcept try
 {
     switch (desiredWeight)
     {
@@ -985,7 +1039,8 @@ HRESULT GetFontWeight(
         break;
     }
     return S_OK;
-} CATCH_RETURN;
+}
+CATCH_RETURN;
 
 HRESULT StringToJsonObject(const string inputString, IJsonObject** result)
 {

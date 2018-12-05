@@ -1,10 +1,12 @@
 #include "pch.h"
 #include "AdaptiveToggleVisibilityAction.h"
 #include "Util.h"
+#include "Vector.h"
 
 using namespace Microsoft::WRL;
 using namespace ABI::AdaptiveNamespace;
 using namespace ABI::Windows::Data::Json;
+using namespace ABI::Windows::Foundation::Collections;
 
 namespace AdaptiveNamespace
 {
@@ -24,7 +26,8 @@ namespace AdaptiveNamespace
             return E_INVALIDARG;
         }
 
-        RETURN_IF_FAILED(UTF8ToHString(sharedToggleVisibilityAction->GetTargetElements(), m_toggleId.GetAddressOf()));
+        m_targetElements = Microsoft::WRL::Make<Vector<AdaptiveToggleTarget*>>();
+        GenerateToggleTargetProjection(sharedToggleVisibilityAction->GetTargetElements(), m_targetElements.Get());
 
         InitializeBaseElement(std::static_pointer_cast<AdaptiveSharedNamespace::BaseActionElement>(sharedToggleVisibilityAction));
         return S_OK;
@@ -37,14 +40,9 @@ namespace AdaptiveNamespace
         return S_OK;
     }
 
-    _Use_decl_annotations_ HRESULT AdaptiveToggleVisibility::get_TargetElements(HSTRING* toggleId)
+    _Use_decl_annotations_ HRESULT AdaptiveToggleVisibility::get_TargetElements(IVector<AdaptiveToggleTarget*>** targetElements)
     {
-        return m_toggleId.CopyTo(toggleId);
-    }
-
-    _Use_decl_annotations_ HRESULT AdaptiveToggleVisibility::put_TargetElements(HSTRING toggleId)
-    {
-        return m_toggleId.Set(toggleId);
+        return m_targetElements.CopyTo(targetElements);
     }
 
     HRESULT AdaptiveToggleVisibility::GetSharedModel(std::shared_ptr<AdaptiveSharedNamespace::BaseActionElement>& sharedModel) try
@@ -53,9 +51,7 @@ namespace AdaptiveNamespace
             std::make_shared<AdaptiveSharedNamespace::ToggleVisibilityAction>();
         RETURN_IF_FAILED(SetSharedElementProperties(std::static_pointer_cast<AdaptiveSharedNamespace::BaseActionElement>(toggleVisibilityAction)));
 
-        std::string toggleId;
-        RETURN_IF_FAILED(HStringToUTF8(m_toggleId.Get(), toggleId));
-        toggleVisibilityAction->SetTargetElements(toggleId);
+        RETURN_IF_FAILED(GenerateSharedToggleElements(m_targetElements.Get(), toggleVisibilityAction->GetTargetElements()));
 
         sharedModel = toggleVisibilityAction;
         return S_OK;
