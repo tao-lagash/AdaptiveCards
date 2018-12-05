@@ -44,6 +44,7 @@ namespace AdaptiveSharedNamespace
             {AdaptiveCardSchemaKey::Default, "default"},
             {AdaptiveCardSchemaKey::DefaultPoster, "defaultPoster"},
             {AdaptiveCardSchemaKey::Display, "display"},
+            {AdaptiveCardSchemaKey::ElementId, "elementId"},
             {AdaptiveCardSchemaKey::Emphasis, "emphasis"},
             {AdaptiveCardSchemaKey::ExtraLarge, "extraLarge"},
             {AdaptiveCardSchemaKey::Facts, "facts"},

@@ -9,29 +9,37 @@ ToggleVisibilityAction::ToggleVisibilityAction() : BaseActionElement(ActionType:
     PopulateKnownPropertiesSet();
 }
 
-std::string ToggleVisibilityAction::GetTargetElements() const
+const std::vector<std::shared_ptr<ToggleVisibilityTargetElement>>& ToggleVisibilityAction::GetTargetElements() const
 {
-    return m_toggleId;
+    return m_targetElements;
 }
 
-void ToggleVisibilityAction::SetTargetElements(const std::string& value)
+std::vector<std::shared_ptr<ToggleVisibilityTargetElement>>& ToggleVisibilityAction::GetTargetElements()
 {
-    m_toggleId = value;
+    return m_targetElements;
 }
 
 Json::Value ToggleVisibilityAction::SerializeToJsonValue() const
 {
     Json::Value root = BaseActionElement::SerializeToJsonValue();
 
-    root[AdaptiveCardSchemaKeyToString(AdaptiveCardSchemaKey::TargetElements)] = GetTargetElements();
-
+    std::string targetElementsPropertyName = AdaptiveCardSchemaKeyToString(AdaptiveCardSchemaKey::TargetElements);
+    root[targetElementsPropertyName] = Json::Value(Json::arrayValue);
+    for (const auto& targetElement : GetTargetElements())
+    {
+        root[targetElementsPropertyName].append(targetElement->SerializeToJsonValue());
+    }
     return root;
 }
 
 std::shared_ptr<BaseActionElement> ToggleVisibilityParser::Deserialize(ParseContext& context, const Json::Value& json)
 {
     std::shared_ptr<ToggleVisibilityAction> toggleVisibilityAction = BaseActionElement::Deserialize<ToggleVisibilityAction>(json);
-    toggleVisibilityAction->SetTargetElements(ParseUtil::GetString(json, AdaptiveCardSchemaKey::TargetElements, true));
+
+    auto targetElements = ParseUtil::GetElementCollectionOfSingleType<ToggleVisibilityTargetElement>(
+        context, json, AdaptiveCardSchemaKey::TargetElements, ToggleVisibilityTargetElement::Deserialize, true);
+    toggleVisibilityAction->m_targetElements = std::move(targetElements);
+
     return toggleVisibilityAction;
 }
 

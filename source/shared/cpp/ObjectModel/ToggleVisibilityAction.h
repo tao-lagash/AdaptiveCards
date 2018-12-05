@@ -4,23 +4,26 @@
 #include "BaseActionElement.h"
 #include "Enums.h"
 #include "ActionParserRegistration.h"
+#include "ToggleVisibilityTargetElement.h"
 
 namespace AdaptiveSharedNamespace
 {
     class ToggleVisibilityAction : public BaseActionElement
     {
+        friend class ToggleVisibilityParser;
+
     public:
         ToggleVisibilityAction();
 
-        std::string GetTargetElements() const;
-        void SetTargetElements(const std::string& value);
+        const std::vector<std::shared_ptr<ToggleVisibilityTargetElement>>& GetTargetElements() const;
+        std::vector<std::shared_ptr<ToggleVisibilityTargetElement>>& GetTargetElements();
 
         Json::Value SerializeToJsonValue() const override;
 
     private:
         void PopulateKnownPropertiesSet() override;
 
-        std::string m_toggleId;
+        std::vector<std::shared_ptr<ToggleVisibilityTargetElement>> m_targetElements;
     };
 
     class ToggleVisibilityParser : public ActionElementParser

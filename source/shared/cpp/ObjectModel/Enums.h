@@ -46,6 +46,7 @@ namespace AdaptiveSharedNamespace
         Default,
         DefaultPoster,
         Display,
+        ElementId,
         Emphasis,
         ExtraLarge,
         Facts,
