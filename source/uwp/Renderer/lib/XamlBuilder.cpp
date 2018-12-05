@@ -1096,28 +1096,6 @@ namespace AdaptiveNamespace
             hr = targetIterator->MoveNext(&hasCurrent);
         }
 
-        HString title;
-        action->get_Title(title.GetAddressOf());
-
-        ComPtr<IButtonBase> localButton(button);
-        ComPtr<IToggleButton> toggleButton;
-        localButton.As(&toggleButton);
-
-        ComPtr<IReference<bool>> isChecked;
-        toggleButton->get_IsChecked(isChecked.GetAddressOf());
-
-        boolean isCheckedValue;
-        isChecked->get_Value(&isCheckedValue);
-
-        ComPtr<IResourceDictionary> resourceDictionary;
-        renderContext->get_OverrideStyles(&resourceDictionary);
-
-        HString actionId;
-        localAction->get_Id(actionId.GetAddressOf());
-
-        UINT32 length;
-        std::wstring actionIdWString = WindowsGetStringRawBuffer(actionId.Get(), &length);
-
         return S_OK;
     }
 
@@ -1270,18 +1248,9 @@ namespace AdaptiveNamespace
                 action->get_ActionType(&actionType);
 
                 ComPtr<IButtonBase> buttonBase;
-                if (actionType == ActionType_ToggleVisibility)
-                {
-                    ComPtr<IToggleButton> toggleButton = XamlHelpers::CreateXamlClass<IToggleButton>(
-                        HStringReference(RuntimeClass_Windows_UI_Xaml_Controls_Primitives_ToggleButton));
-                    toggleButton.As(&buttonBase);
-                }
-                else
-                {
-                    ComPtr<IButton> button =
-                        XamlHelpers::CreateXamlClass<IButton>(HStringReference(RuntimeClass_Windows_UI_Xaml_Controls_Button));
-                    button.As(&buttonBase);
-                }
+                ComPtr<IButton> button =
+                    XamlHelpers::CreateXamlClass<IButton>(HStringReference(RuntimeClass_Windows_UI_Xaml_Controls_Button));
+                button.As(&buttonBase);
 
                 ComPtr<IFrameworkElement> buttonFrameworkElement;
                 THROW_IF_FAILED(buttonBase.As(&buttonFrameworkElement));
