@@ -252,7 +252,7 @@ namespace AdaptiveNamespace
         static void SetVerticalContentAlignmentToChildren(_In_ T* container,
                                                           _In_ ABI::AdaptiveNamespace::VerticalContentAlignment verticalContentAlignment);
 
-        static HRESULT HandleToggleViewStateClick(ABI::AdaptiveNamespace::IAdaptiveRenderContext* renderContext,
+        static HRESULT HandleToggleVisibilityClick(ABI::AdaptiveNamespace::IAdaptiveRenderContext* renderContext,
                                                   ABI::AdaptiveNamespace::IAdaptiveActionElement* action,
                                                   ABI::Windows::UI::Xaml::Controls::Primitives::IButtonBase* button);
 

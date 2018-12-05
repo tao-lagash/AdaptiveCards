@@ -74,6 +74,7 @@ namespace AdaptiveSharedNamespace
             {AdaptiveCardSchemaKey::IsRequired, "isRequired"},
             {AdaptiveCardSchemaKey::IsSelected, "isSelected"},
             {AdaptiveCardSchemaKey::IsSubtle, "isSubtle"},
+            {AdaptiveCardSchemaKey::IsVisible, "isVisible"},
             {AdaptiveCardSchemaKey::Items, "items"},
             {AdaptiveCardSchemaKey::Language, "lang"},
             {AdaptiveCardSchemaKey::Large, "large"},
@@ -117,6 +118,7 @@ namespace AdaptiveSharedNamespace
             {AdaptiveCardSchemaKey::Style, "style"},
             {AdaptiveCardSchemaKey::Subtle, "subtle"},
             {AdaptiveCardSchemaKey::SupportsInteractivity, "supportsInteractivity"},
+            {AdaptiveCardSchemaKey::TargetElements, "targetElements"},
             {AdaptiveCardSchemaKey::Text, "text"},
             {AdaptiveCardSchemaKey::TextBlock, "textBlock"},
             {AdaptiveCardSchemaKey::TextConfig, "textConfig"},
@@ -126,7 +128,6 @@ namespace AdaptiveSharedNamespace
             {AdaptiveCardSchemaKey::Thickness, "thickness"},
             {AdaptiveCardSchemaKey::TimeInput, "timeInput"},
             {AdaptiveCardSchemaKey::Title, "title"},
-            {AdaptiveCardSchemaKey::ToggleId, "toggleId"},
             {AdaptiveCardSchemaKey::ToggleInput, "toggleInput"},
             {AdaptiveCardSchemaKey::Top, "top"},
             {AdaptiveCardSchemaKey::Type, "type"},
@@ -136,7 +137,6 @@ namespace AdaptiveSharedNamespace
             {AdaptiveCardSchemaKey::ValueOn, "valueOn"},
             {AdaptiveCardSchemaKey::Version, "version"},
             {AdaptiveCardSchemaKey::VerticalContentAlignment, "verticalContentAlignment"},
-            {AdaptiveCardSchemaKey::Visibility, "visibility"},
             {AdaptiveCardSchemaKey::Warning, "warning"},
             {AdaptiveCardSchemaKey::Weight, "weight"},
             {AdaptiveCardSchemaKey::Width, "width"},
@@ -167,7 +167,7 @@ namespace AdaptiveSharedNamespace
             {ActionType::OpenUrl, "Action.OpenUrl"},
             {ActionType::ShowCard, "Action.ShowCard"},
             {ActionType::Submit, "Action.Submit"},
-            {ActionType::ToggleViewState, "Action.ToggleViewState"},
+            {ActionType::ToggleVisibility, "Action.ToggleVisibility"},
             {ActionType::Custom, "Custom"}});
 
     DEFINE_ADAPTIVECARD_ENUM_DEFAULT(HeightType, HeightType::Stretch, {

@@ -76,6 +76,7 @@ namespace AdaptiveSharedNamespace
         IsRequired,
         IsSelected,
         IsSubtle,
+        IsVisible,
         Items,
         Language,
         Large,
@@ -118,6 +119,7 @@ namespace AdaptiveSharedNamespace
         Style,
         Subtle,
         SupportsInteractivity,
+        TargetElements,
         Text,
         TextBlock,
         TextConfig,
@@ -127,7 +129,6 @@ namespace AdaptiveSharedNamespace
         Thickness,
         TimeInput,
         Title,
-        ToggleId,
         ToggleInput,
         Top,
         Type,
@@ -137,7 +138,6 @@ namespace AdaptiveSharedNamespace
         ValueOn,
         Version,
         VerticalContentAlignment,
-        Visibility,
         Warning,
         Weight,
         Width,
@@ -249,7 +249,7 @@ namespace AdaptiveSharedNamespace
         ShowCard,
         Submit,
         OpenUrl,
-        ToggleViewState,
+        ToggleVisibility,
         Custom
     };
     DECLARE_ADAPTIVECARD_ENUM(ActionType);

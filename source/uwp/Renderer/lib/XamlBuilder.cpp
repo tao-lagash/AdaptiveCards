@@ -828,10 +828,10 @@ namespace AdaptiveNamespace
                 ComPtr<IUIElement> newControl;
                 elementRenderer->Render(element, renderContext, renderArgs, &newControl);
 
-                boolean visibility;
-                THROW_IF_FAILED(element->get_Visibility(&visibility));
+                boolean isVisible;
+                THROW_IF_FAILED(element->get_IsVisible(&isVisible));
 
-                if (!visibility)
+                if (!isVisible)
                 {
                     THROW_IF_FAILED(newControl->put_Visibility(Visibility_Collapsed));
                 }
@@ -1035,14 +1035,14 @@ namespace AdaptiveNamespace
         }
     }
 
-    HRESULT XamlBuilder::HandleToggleViewStateClick(IAdaptiveRenderContext* renderContext, IAdaptiveActionElement* action, IButtonBase* button)
+    HRESULT XamlBuilder::HandleToggleVisibilityClick(IAdaptiveRenderContext* renderContext, IAdaptiveActionElement* action, IButtonBase* button)
     {
         ComPtr<IAdaptiveActionElement> localAction(action);
-        ComPtr<IAdaptiveToggleViewStateAction> toggleAction;
+        ComPtr<IAdaptiveToggleVisibility> toggleAction;
         RETURN_IF_FAILED(localAction.As(&toggleAction));
 
         HString toggleId;
-        RETURN_IF_FAILED(toggleAction->get_ToggleId(toggleId.GetAddressOf()));
+        RETURN_IF_FAILED(toggleAction->get_TargetElements(toggleId.GetAddressOf()));
 
         ComPtr<IFrameworkElement> cardFrameworkElement;
         RETURN_IF_FAILED(renderContext->get_CardFrameworkElement(&cardFrameworkElement));
@@ -1235,7 +1235,7 @@ namespace AdaptiveNamespace
                 action->get_ActionType(&actionType);
 
                 ComPtr<IButtonBase> buttonBase;
-                if (actionType == ActionType_ToggleViewState)
+                if (actionType == ActionType_ToggleVisibility)
                 {
                     ComPtr<IToggleButton> toggleButton = XamlHelpers::CreateXamlClass<IToggleButton>(
                         HStringReference(RuntimeClass_Windows_UI_Xaml_Controls_Primitives_ToggleButton));
@@ -1332,10 +1332,10 @@ namespace AdaptiveNamespace
                                     RETURN_IF_FAILED(uiShowCard->put_Visibility(Visibility_Visible));
                                 }
                             }
-                            else if (actionType == ABI::AdaptiveNamespace::ActionType::ToggleViewState)
+                            else if (actionType == ABI::AdaptiveNamespace::ActionType::ToggleVisibility)
                             {
                                 RETURN_IF_FAILED(
-                                    HandleToggleViewStateClick(strongRenderContext.Get(), action.Get(), buttonBase.Get()));
+                                    HandleToggleVisibilityClick(strongRenderContext.Get(), action.Get(), buttonBase.Get()));
                             }
                             else
                             {

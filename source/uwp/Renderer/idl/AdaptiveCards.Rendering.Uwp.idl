@@ -48,7 +48,7 @@ AdaptiveNamespaceStart
     runtimeclass AdaptiveTimeInput;
     runtimeclass AdaptiveToggleInput;
     runtimeclass AdaptiveSeparator;
-    runtimeclass AdaptiveToggleViewStateAction;
+    runtimeclass AdaptiveToggleVisibility;
 
     runtimeclass AdaptiveFontSizesConfig;
     runtimeclass AdaptiveFontWeightsConfig;
@@ -262,7 +262,7 @@ AdaptiveNamespaceStart
         ShowCard,
         Submit,
         OpenUrl,
-        ToggleViewState,
+        ToggleVisibility,
         Custom
     } ActionType;
 
@@ -512,8 +512,8 @@ AdaptiveNamespaceStart
         [propget] HRESULT Id([out, retval] HSTRING* value);
         [propput] HRESULT Id([in] HSTRING value);
 
-        [propget] HRESULT Visibility([out, retval] boolean * value);
-        [propput] HRESULT Visibility([in] boolean value);
+        [propget] HRESULT IsVisible([out, retval] boolean * value);
+        [propput] HRESULT IsVisible([in] boolean value);
 
         [propget] HRESULT AdditionalProperties([out, retval] Windows.Data.Json.JsonObject** json);
         [propput] HRESULT AdditionalProperties([in] Windows.Data.Json.JsonObject* json);
@@ -2542,7 +2542,7 @@ AdaptiveNamespaceStart
 
     [
         version(NTDDI_WIN10_RS1),
-        exclusiveto(AdaptiveToggleViewStateAction),
+        exclusiveto(AdaptiveToggleVisibility),
 #ifdef ADAPTIVE_CARDS_WINDOWS
         uuid(7DD38D1D-338A-40D3-9AF8-912FBC61427C),
         contract(InternalContract, 1),
@@ -2550,10 +2550,10 @@ AdaptiveNamespaceStart
 #else
         uuid(DF122310-5768-4111-A155-92F6F34BB37A)
 #endif
-    ] interface IAdaptiveToggleViewStateAction : IInspectable
+    ] interface IAdaptiveToggleVisibility : IInspectable
     {
-        [propget] HRESULT ToggleId([out, retval] HSTRING* value);
-        [propput] HRESULT ToggleId([in] HSTRING value);
+        [propget] HRESULT TargetElements([out, retval] HSTRING* value);
+        [propput] HRESULT TargetElements([in] HSTRING value);
     };
 
     [version(NTDDI_WIN10_RS1),
@@ -2563,8 +2563,8 @@ AdaptiveNamespaceStart
      internal,
      activatable(InternalContract, 1)
 #endif
-    ] runtimeclass AdaptiveToggleViewStateAction {
-        [default] interface IAdaptiveToggleViewStateAction;
+    ] runtimeclass AdaptiveToggleVisibility {
+        [default] interface IAdaptiveToggleVisibility;
         interface IAdaptiveActionElement;
     };
 

@@ -2,27 +2,27 @@
 
 #include "AdaptiveCards.Rendering.Uwp.h"
 #include "Enums.h"
-#include "ToggleViewStateAction.h"
+#include "ToggleVisibilityAction.h"
 #include "AdaptiveActionElement.h"
 
 namespace AdaptiveNamespace
 {
-    class DECLSPEC_UUID("32114ce2-7e10-4f7f-8225-bfd661c6794c") AdaptiveToggleViewStateAction
+    class DECLSPEC_UUID("32114ce2-7e10-4f7f-8225-bfd661c6794c") AdaptiveToggleVisibility
         : public Microsoft::WRL::RuntimeClass<Microsoft::WRL::RuntimeClassFlags<Microsoft::WRL::RuntimeClassType::WinRtClassicComMix>,
-                                              ABI::AdaptiveNamespace::IAdaptiveToggleViewStateAction,
+                                              ABI::AdaptiveNamespace::IAdaptiveToggleVisibility,
                                               ABI::AdaptiveNamespace::IAdaptiveActionElement,
                                               Microsoft::WRL::CloakedIid<ITypePeek>,
                                               Microsoft::WRL::CloakedIid<AdaptiveNamespace::AdaptiveActionElementBase>>
     {
-        AdaptiveRuntime(AdaptiveToggleViewStateAction);
+        AdaptiveRuntime(AdaptiveToggleVisibility);
 
     public:
         HRESULT RuntimeClassInitialize() noexcept;
-        HRESULT RuntimeClassInitialize(_In_ const std::shared_ptr<AdaptiveSharedNamespace::ToggleViewStateAction>& sharedToggleViewStateAction);
+        HRESULT RuntimeClassInitialize(_In_ const std::shared_ptr<AdaptiveSharedNamespace::ToggleVisibilityAction>& sharedToggleVisibilityAction);
 
-        // IAdaptiveToggleViewStateAction
-        IFACEMETHODIMP get_ToggleId(_Out_ HSTRING* data);
-        IFACEMETHODIMP put_ToggleId(_In_ HSTRING data);
+        // IAdaptiveToggleVisibilityAction
+        IFACEMETHODIMP get_TargetElements(_Out_ HSTRING* data);
+        IFACEMETHODIMP put_TargetElements(_In_ HSTRING data);
 
         // IAdaptiveActionElement
         IFACEMETHODIMP get_ActionType(_Out_ ABI::AdaptiveNamespace::ActionType* actionType);
@@ -66,5 +66,5 @@ namespace AdaptiveNamespace
         Microsoft::WRL::Wrappers::HString m_toggleId;
     };
 
-    ActivatableClass(AdaptiveToggleViewStateAction);
+    ActivatableClass(AdaptiveToggleVisibility);
 }
