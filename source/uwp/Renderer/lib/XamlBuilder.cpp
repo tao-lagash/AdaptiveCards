@@ -996,7 +996,7 @@ namespace AdaptiveNamespace
                         ComPtr<IFrameworkElement> buttonTextAsFrameworkElement;
                         RETURN_IF_FAILED(buttonText.As(&buttonTextAsFrameworkElement));
 
-                        return SetMatchingHeight(buttonIconAsFrameworkElement.Get(), buttonTextAsFrameworkElement.Get());
+                        return SetMatchingHeight(buttonIconAsFrameworkElement.Get(), buttonTextAsFrameworkElement.Get(), true);
                     })
                         .Get(),
                     &eventToken));
@@ -1766,7 +1766,8 @@ namespace AdaptiveNamespace
 
     _Use_decl_annotations_ HRESULT XamlBuilder::SetAutoImageSize(IFrameworkElement* imageControl,
                                                                  IInspectable* parentElement,
-                                                                 IBitmapSource* imageSource)
+                                                                 IBitmapSource* imageSource,
+                                                                 bool setVisible)
     {
         INT32 pixelHeight;
         RETURN_IF_FAILED(imageSource->get_PixelHeight(&pixelHeight));
@@ -1799,14 +1800,19 @@ namespace AdaptiveNamespace
         RETURN_IF_FAILED(localElement->put_MaxHeight(min(maxHeight, pixelHeight)));
         RETURN_IF_FAILED(localElement->put_MaxWidth(min(maxWidth, pixelWidth)));
 
-        ComPtr<IUIElement> frameworkElementAsUIElement;
-        RETURN_IF_FAILED(localElement.As(&frameworkElementAsUIElement));
-        RETURN_IF_FAILED(frameworkElementAsUIElement->put_Visibility(Visibility::Visibility_Visible));
+        if (setVisible)
+        {
+            ComPtr<IUIElement> frameworkElementAsUIElement;
+            RETURN_IF_FAILED(localElement.As(&frameworkElementAsUIElement));
+            RETURN_IF_FAILED(frameworkElementAsUIElement->put_Visibility(Visibility::Visibility_Visible));
+        }
 
         return S_OK;
     }
 
-    _Use_decl_annotations_ HRESULT XamlBuilder::SetMatchingHeight(IFrameworkElement* elementToChange, IFrameworkElement* elementToMatch)
+    _Use_decl_annotations_ HRESULT XamlBuilder::SetMatchingHeight(IFrameworkElement* elementToChange,
+                                                                  IFrameworkElement* elementToMatch,
+                                                                  bool setVisible)
     {
         DOUBLE actualHeight;
         RETURN_IF_FAILED(elementToMatch->get_ActualHeight(&actualHeight));
@@ -1814,9 +1820,12 @@ namespace AdaptiveNamespace
         ComPtr<IFrameworkElement> localElement(elementToChange);
         RETURN_IF_FAILED(localElement->put_Height(actualHeight));
 
-        ComPtr<IUIElement> frameworkElementAsUIElement;
-        RETURN_IF_FAILED(localElement.As(&frameworkElementAsUIElement));
-        RETURN_IF_FAILED(frameworkElementAsUIElement->put_Visibility(Visibility::Visibility_Visible));
+        if (setVisible)
+        {
+            ComPtr<IUIElement> frameworkElementAsUIElement;
+            RETURN_IF_FAILED(localElement.As(&frameworkElementAsUIElement));
+            RETURN_IF_FAILED(frameworkElementAsUIElement->put_Visibility(Visibility::Visibility_Visible));
+        }
         return S_OK;
     }
 
@@ -1873,6 +1882,9 @@ namespace AdaptiveNamespace
 
         HSTRING backgroundColor;
         THROW_IF_FAILED(adaptiveImage->get_BackgroundColor(&backgroundColor));
+
+        boolean isVisible;
+        adaptiveCardElement->get_IsVisible(&isVisible);
 
         ComPtr<IFrameworkElement> frameworkElement;
         if (imageStyle == ImageStyle_Person)
@@ -1952,10 +1964,14 @@ namespace AdaptiveNamespace
                     // Handle ImageOpened event so we can check the imageSource's size to determine if it fits in its parent
                     EventRegistrationToken eventToken;
                     THROW_IF_FAILED(brushAsImageBrush->add_ImageOpened(
-                        Callback<IRoutedEventHandler>([ellipseAsUIElement](IInspectable* /*sender*/, IRoutedEventArgs * /*args*/) -> HRESULT {
+                        Callback<IRoutedEventHandler>([ellipseAsUIElement, isVisible](IInspectable* /*sender*/, IRoutedEventArgs * /*args*/) -> HRESULT {
                             // Don't set the AutoImageSize on the ellipse as it makes the ellipse grow bigger than
                             // what it would be otherwise, just set the visibility when we get the image
-                            return ellipseAsUIElement->put_Visibility(Visibility::Visibility_Visible);
+
+                            if (isVisible)
+                            {
+                                return ellipseAsUIElement->put_Visibility(Visibility::Visibility_Visible);
+                            }
                         })
                             .Get(),
                         &eventToken));
@@ -2018,16 +2034,17 @@ namespace AdaptiveNamespace
                     // Handle ImageOpened event so we can check the imageSource's size to determine if it fits in its parent
                     EventRegistrationToken eventToken;
                     THROW_IF_FAILED(xamlImage->add_ImageOpened(
-                        Callback<IRoutedEventHandler>([frameworkElement, parentElement, imageSourceAsBitmap](IInspectable* /*sender*/, IRoutedEventArgs *
-                                                                                                             /*args*/) -> HRESULT {
-                            return SetAutoImageSize(frameworkElement.Get(), parentElement.Get(), imageSourceAsBitmap.Get());
-                        })
+                        Callback<IRoutedEventHandler>(
+                            [frameworkElement, parentElement, imageSourceAsBitmap, isVisible](IInspectable* /*sender*/, IRoutedEventArgs *
+                                                                                              /*args*/) -> HRESULT {
+                                return SetAutoImageSize(frameworkElement.Get(), parentElement.Get(), imageSourceAsBitmap.Get(), isVisible);
+                            })
                             .Get(),
                         &eventToken));
                 }
                 else
                 {
-                    SetAutoImageSize(frameworkElement.Get(), parentElement.Get(), imageSourceAsBitmap.Get());
+                    SetAutoImageSize(frameworkElement.Get(), parentElement.Get(), imageSourceAsBitmap.Get(), isVisible);
                 }
             }
         }
@@ -3189,15 +3206,18 @@ namespace AdaptiveNamespace
             THROW_IF_FAILED(panel.As(&actionUIElement));
         }
 
+        boolean isVisible;
+        localInlineAction->get_IsVisible(&isVisible);
+
         // Make the action the same size as the text box
         EventRegistrationToken eventToken;
         THROW_IF_FAILED(textBoxAsFrameworkElement->add_Loaded(
             Callback<IRoutedEventHandler>(
-                [actionUIElement, textBoxAsFrameworkElement](IInspectable* /*sender*/, IRoutedEventArgs * /*args*/) -> HRESULT {
+                [actionUIElement, textBoxAsFrameworkElement, isVisible](IInspectable* /*sender*/, IRoutedEventArgs * /*args*/) -> HRESULT {
                     ComPtr<IFrameworkElement> actionFrameworkElement;
                     RETURN_IF_FAILED(actionUIElement.As(&actionFrameworkElement));
 
-                    return SetMatchingHeight(actionFrameworkElement.Get(), textBoxAsFrameworkElement.Get());
+                    return SetMatchingHeight(actionFrameworkElement.Get(), textBoxAsFrameworkElement.Get(), isVisible);
                 })
                 .Get(),
             &eventToken));

@@ -126,9 +126,9 @@ Json::Value BaseCardElement::SerializeToJsonValue() const
         root[AdaptiveCardSchemaKeyToString(AdaptiveCardSchemaKey::Id)] = m_id;
     }
 
-    if (m_isVisible)
+    if (!m_isVisible)
     {
-        root[AdaptiveCardSchemaKeyToString(AdaptiveCardSchemaKey::IsVisible)] = true;
+        root[AdaptiveCardSchemaKeyToString(AdaptiveCardSchemaKey::IsVisible)] = false;
     }
 
     return root;

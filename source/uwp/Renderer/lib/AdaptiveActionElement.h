@@ -25,6 +25,9 @@ namespace AdaptiveNamespace
         IFACEMETHODIMP get_Sentiment(_Out_ ABI::AdaptiveNamespace::Sentiment *sentiment);
         IFACEMETHODIMP put_Sentiment(_In_ ABI::AdaptiveNamespace::Sentiment sentiment);
 
+        IFACEMETHODIMP get_IsVisible(boolean* separator);
+        IFACEMETHODIMP put_IsVisible(boolean separator);
+
         IFACEMETHODIMP get_AdditionalProperties(_Out_ ABI::Windows::Data::Json::IJsonObject** result);
         IFACEMETHODIMP put_AdditionalProperties(_In_ ABI::Windows::Data::Json::IJsonObject* value);
 
@@ -41,5 +44,6 @@ namespace AdaptiveNamespace
         ABI::AdaptiveNamespace::Sentiment m_sentiment;
         Microsoft::WRL::ComPtr<ABI::Windows::Data::Json::IJsonObject> m_additionalProperties;
         Microsoft::WRL::Wrappers::HString m_typeString;
+        boolean m_isVisible;
     };
 }

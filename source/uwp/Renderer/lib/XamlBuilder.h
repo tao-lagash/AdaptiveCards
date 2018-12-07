@@ -243,18 +243,20 @@ namespace AdaptiveNamespace
 
         static HRESULT SetAutoImageSize(_In_ ABI::Windows::UI::Xaml::IFrameworkElement* imageControl,
                                         _In_ IInspectable* parentElement,
-                                        _In_ ABI::Windows::UI::Xaml::Media::Imaging::IBitmapSource* imageSource);
+                                        _In_ ABI::Windows::UI::Xaml::Media::Imaging::IBitmapSource* imageSource,
+                                        bool setVisible);
 
         static HRESULT SetMatchingHeight(_In_ ABI::Windows::UI::Xaml::IFrameworkElement* elementToChange,
-                                         _In_ ABI::Windows::UI::Xaml::IFrameworkElement* elementToMatch);
+                                         _In_ ABI::Windows::UI::Xaml::IFrameworkElement* elementToMatch,
+                                         bool setVisible);
 
         template<typename T>
         static void SetVerticalContentAlignmentToChildren(_In_ T* container,
                                                           _In_ ABI::AdaptiveNamespace::VerticalContentAlignment verticalContentAlignment);
 
         static HRESULT HandleToggleVisibilityClick(ABI::AdaptiveNamespace::IAdaptiveRenderContext* renderContext,
-                                                  ABI::AdaptiveNamespace::IAdaptiveActionElement* action,
-                                                  ABI::Windows::UI::Xaml::Controls::Primitives::IButtonBase* button);
+                                                   ABI::AdaptiveNamespace::IAdaptiveActionElement* action,
+                                                   ABI::Windows::UI::Xaml::Controls::Primitives::IButtonBase* button);
 
         static void SetIdAndTransform(ABI::AdaptiveNamespace::IAdaptiveRenderContext* renderContext,
                                       HSTRING id,

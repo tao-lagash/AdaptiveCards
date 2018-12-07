@@ -40,8 +40,23 @@ namespace AdaptiveNamespace
         IFACEMETHODIMP get_IconUrl(_Out_ HSTRING* iconUrl) { return AdaptiveActionElementBase::get_IconUrl(iconUrl); }
         IFACEMETHODIMP put_IconUrl(_In_ HSTRING iconUrl) { return AdaptiveActionElementBase::put_IconUrl(iconUrl); }
 
-        IFACEMETHODIMP get_Sentiment(_Out_ ABI::AdaptiveNamespace::Sentiment *sentiment) { return AdaptiveActionElementBase::get_Sentiment(sentiment); }
-        IFACEMETHODIMP put_Sentiment(_In_ ABI::AdaptiveNamespace::Sentiment sentiment) { return AdaptiveActionElementBase::put_Sentiment(sentiment); }
+        IFACEMETHODIMP get_Sentiment(_Out_ ABI::AdaptiveNamespace::Sentiment* sentiment)
+        {
+            return AdaptiveActionElementBase::get_Sentiment(sentiment);
+        }
+        IFACEMETHODIMP put_Sentiment(_In_ ABI::AdaptiveNamespace::Sentiment sentiment)
+        {
+            return AdaptiveActionElementBase::put_Sentiment(sentiment);
+        }
+
+        IFACEMETHODIMP get_IsVisible(_Out_ boolean* isVisible)
+        {
+            return AdaptiveActionElementBase::get_IsVisible(isVisible);
+        }
+        IFACEMETHODIMP put_IsVisible(_In_ boolean isVisible)
+        {
+            return AdaptiveActionElementBase::put_IsVisible(isVisible);
+        }
 
         IFACEMETHODIMP get_AdditionalProperties(_Out_ ABI::Windows::Data::Json::IJsonObject** result)
         {

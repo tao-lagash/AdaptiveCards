@@ -20,7 +20,8 @@ namespace AdaptiveNamespace
         RETURN_IF_FAILED(UTF8ToHString(sharedModel->GetElementTypeString(), m_typeString.GetAddressOf()));
 
         RETURN_IF_FAILED(UTF8ToHString(sharedModel->GetIconUrl(), m_iconUrl.GetAddressOf()));
-        
+
+        m_isVisible = sharedModel->GetIsVisible();
         m_sentiment = static_cast<ABI::AdaptiveNamespace::Sentiment>(sharedModel->GetSentiment());
 
         return S_OK;
@@ -56,6 +57,18 @@ namespace AdaptiveNamespace
         return S_OK;
     }
 
+    IFACEMETHODIMP AdaptiveActionElementBase::get_IsVisible(boolean* isVisible)
+    {
+        *isVisible = m_isVisible;
+        return S_OK;
+    }
+
+    IFACEMETHODIMP AdaptiveActionElementBase::put_IsVisible(boolean isVisible)
+    {
+        m_isVisible = isVisible;
+        return S_OK;
+    }
+
     IFACEMETHODIMP AdaptiveActionElementBase::get_AdditionalProperties(ABI::Windows::Data::Json::IJsonObject** result)
     {
         return m_additionalProperties.CopyTo(result);
@@ -83,6 +96,7 @@ namespace AdaptiveNamespace
         sharedCardElement->SetTitle(HStringToUTF8(m_title.Get()));
         sharedCardElement->SetIconUrl(HStringToUTF8(m_iconUrl.Get()));
         sharedCardElement->SetSentiment(static_cast<AdaptiveSharedNamespace::Sentiment>(m_sentiment));
+        sharedCardElement->SetIsVisible(m_isVisible);
 
         if (m_additionalProperties != nullptr)
         {

@@ -2453,6 +2453,9 @@ AdaptiveNamespaceStart
         [propget] HRESULT Sentiment([out, retval] Sentiment* value);
         [propput] HRESULT Sentiment([in] Sentiment value);
 
+        [propget] HRESULT IsVisible([out, retval] boolean * value);
+        [propput] HRESULT IsVisible([in] boolean value);
+
         [propget] HRESULT AdditionalProperties([out, retval] Windows.Data.Json.JsonObject** json);
         [propput] HRESULT AdditionalProperties([in] Windows.Data.Json.JsonObject* json);
 

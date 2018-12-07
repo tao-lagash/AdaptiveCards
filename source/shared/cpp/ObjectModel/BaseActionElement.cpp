@@ -6,7 +6,7 @@
 using namespace AdaptiveSharedNamespace;
 
 BaseActionElement::BaseActionElement(ActionType type) :
-    m_type(type), m_typeString(ActionTypeToString(type)), m_sentiment(Sentiment::Default)
+    m_type(type), m_typeString(ActionTypeToString(type)), m_sentiment(Sentiment::Default), m_isVisible(true)
 {
     PopulateKnownPropertiesSet();
 }
@@ -61,6 +61,16 @@ void BaseActionElement::SetSentiment(const Sentiment& value)
     m_sentiment = value;
 }
 
+bool BaseActionElement::GetIsVisible() const
+{
+    return m_isVisible;
+}
+
+void BaseActionElement::SetIsVisible(const bool value)
+{
+    m_isVisible = value;
+}
+
 const ActionType BaseActionElement::GetElementType() const
 {
     return m_type;
@@ -93,6 +103,11 @@ Json::Value BaseActionElement::SerializeToJsonValue() const
         root[AdaptiveCardSchemaKeyToString(AdaptiveCardSchemaKey::IconUrl)] = m_iconUrl;
     }
 
+    if (!m_isVisible)
+    {
+        root[AdaptiveCardSchemaKeyToString(AdaptiveCardSchemaKey::IsVisible)] = false;
+    }
+
     return root;
 }
 
@@ -112,7 +127,8 @@ void BaseActionElement::PopulateKnownPropertiesSet()
                               AdaptiveCardSchemaKeyToString(AdaptiveCardSchemaKey::Title),
                               AdaptiveCardSchemaKeyToString(AdaptiveCardSchemaKey::Id),
                               AdaptiveCardSchemaKeyToString(AdaptiveCardSchemaKey::IconUrl),
-                              AdaptiveCardSchemaKeyToString(AdaptiveCardSchemaKey::Sentiment)});
+                              AdaptiveCardSchemaKeyToString(AdaptiveCardSchemaKey::Sentiment),
+                              AdaptiveCardSchemaKeyToString(AdaptiveCardSchemaKey::IsVisible)});
 }
 
 void BaseActionElement::GetResourceInformation(std::vector<RemoteResourceInformation>& resourceInfo)
