@@ -2099,6 +2099,74 @@ export abstract class Input extends CardElement implements Utils.IInput {
     }
 }
 
+export class PasswordInput extends Input {
+    private _textareaElement: HTMLTextAreaElement;
+    private _inputElement: HTMLInputElement;
+
+    protected internalRender(): HTMLElement {
+            this._inputElement = document.createElement("input");
+            this._inputElement.type = "password";
+            this._inputElement.className = this.hostConfig.makeCssClassName("ac-input", "ac-textInput");
+            this._inputElement.style.width = "100%";
+            this._inputElement.tabIndex = 0;
+
+            if (!Utils.isNullOrEmpty(this.placeholder)) {
+                this._inputElement.placeholder = this.placeholder;
+                this._inputElement.setAttribute("aria-label", this.placeholder)
+            }
+
+            if (!Utils.isNullOrEmpty(this.defaultValue)) {
+                this._inputElement.value = this.defaultValue;
+            }
+
+            if (this.maxLength > 0) {
+                this._inputElement.maxLength = this.maxLength;
+            }
+
+            this._inputElement.oninput = () => { this.valueChanged(); }
+
+            return this._inputElement;
+    }
+
+    maxLength: number;
+    isMultiline: boolean;
+    placeholder: string;
+    style: Enums.InputTextStyle = Enums.InputTextStyle.Text;
+
+    getJsonTypeName(): string {
+        return "Input.Password";
+    }
+
+    toJSON() {
+        let result = super.toJSON();
+
+        Utils.setProperty(result, "placeholder", this.placeholder);
+        Utils.setProperty(result, "maxLength", this.maxLength, 0);
+        Utils.setProperty(result, "isMultiline", this.isMultiline, false);
+        Utils.setEnumProperty(Enums.InputTextStyle, result, "style", this.style, Enums.InputTextStyle.Text);
+
+        return result;
+    }
+
+    parse(json: any, errors?: Array<IValidationError>) {
+        super.parse(json, errors);
+
+        this.maxLength = json["maxLength"];
+        this.isMultiline = json["isMultiline"];
+        this.placeholder = json["placeholder"];
+        this.style = Utils.getEnumValueOrDefault(Enums.InputTextStyle, json["style"], this.style);
+    }
+
+    get value(): string {
+        if (this.isMultiline) {
+            return this._textareaElement ? this._textareaElement.value : null;
+        }
+        else {
+            return this._inputElement ? this._inputElement.value : null;
+        }
+    }
+}
+
 export class TextInput extends Input {
     private _textareaElement: HTMLTextAreaElement;
     private _inputElement: HTMLInputElement;
@@ -2388,7 +2456,7 @@ export class ChoiceSetInput extends Input {
 
                     let spacerElement = document.createElement("div");
                     spacerElement.style.width = "6px";
-    
+
                     let compoundInput = document.createElement("div");
                     compoundInput.style.display = "flex";
 
@@ -5404,6 +5472,7 @@ export class ElementTypeRegistry extends TypeRegistry<CardElement> {
         this.registerType("FactSet", () => { return new FactSet(); });
         this.registerType("ColumnSet", () => { return new ColumnSet(); });
         this.registerType("Input.Text", () => { return new TextInput(); });
+        this.registerType("Input.Password", () => { return new PasswordInput(); });
         this.registerType("Input.Date", () => { return new DateInput(); });
         this.registerType("Input.Time", () => { return new TimeInput(); });
         this.registerType("Input.Number", () => { return new NumberInput(); });
